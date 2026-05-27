@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Standard Hardened Reusable Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerifiedUser() {
+      // Mandate verified state for security against spoofing
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Helper: Saved Monograph validation
+    function isValidSavedMonograph(data) {
+      return data.keys().hasAll(['rxcui', 'drugName', 'savedAt'])
+        && data.keys().size() == 3
+        && data.rxcui is string
+        && data.rxcui.size() <= 64
+        && data.drugName is string
+        && data.drugName.size() <= 200
+        && data.savedAt is timestamp;
+    }
+
+    // Helper: Search History validation
+    function isValidSearchHistoryItem(data) {
+      return data.keys().hasAll(['query', 'searchedAt'])
+        && data.keys().size() == 2
+        && data.query is string
+        && data.query.size() > 0
+        && data.query.size() <= 200
+        && data.searchedAt is timestamp;
+    }
+
+    // Main collection sets
+    match /users/{userId} {
+      // Self profile is read/write by owner
+      allow read: if isOwner(userId);
+      
+      // Subcollection: Saved Monographs
+      match /savedMonographs/{monographId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId) 
+          && isVerifiedUser()
+          && isValidSavedMonograph(incoming())
+          && incoming().savedAt == request.time
+          && isValidId(monographId);
+        allow update: if false; // Immutable saved records
+      }
+
+      // Subcollection: Search History Items
+      match /searchHistory/{historyId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isVerifiedUser()
+          && isValidSearchHistoryItem(incoming())
+          && incoming().searchedAt == request.time
+          && isValidId(historyId);
+        allow update: if false; // Immutable records
+      }
+    }
+  }
+}

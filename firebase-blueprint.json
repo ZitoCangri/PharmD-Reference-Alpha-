@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "SavedMonograph": {
+      "title": "SavedMonograph",
+      "description": "A drug monograph saved by a healthcare provider or user",
+      "type": "object",
+      "properties": {
+        "rxcui": {
+          "type": "string",
+          "description": "RxNorm Concept ID of the saved drug"
+        },
+        "drugName": {
+          "type": "string",
+          "description": "Normalized name of the saved drug"
+        },
+        "savedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp indicating when the monograph was saved"
+        }
+      },
+      "required": ["rxcui", "drugName", "savedAt"]
+    },
+    "SearchHistoryItem": {
+      "title": "SearchHistoryItem",
+      "description": "A recorded search query item",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The drug or condition search query"
+        },
+        "searchedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp indicating when search was done"
+        }
+      },
+      "required": ["query", "searchedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/savedMonographs/{monographId}": {
+      "schema": "SavedMonograph",
+      "description": "Collection of saved drug monographs for each registered user"
+    },
+    "/users/{userId}/searchHistory/{historyId}": {
+      "schema": "SearchHistoryItem",
+      "description": "Collection of search logs for each registered user"
+    }
+  }
+}

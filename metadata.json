@@ -1,0 +1,6 @@
+{
+  "name": "Clinical Pharmacy Reference",
+  "description": "A clinical-grade pharmacy web application for pharmacists and healthcare providers featuring RxNorm active ingredient normalization, openFDA drug monograph visualization, and disease-to-medication indexing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
